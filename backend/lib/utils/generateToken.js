@@ -10,7 +10,5 @@ export const generateTokenAndSetCookie = (userId , res) => {
     httpOnly: true,
     secure: true,
     sameSite: "strict" //CSRF attacks cross-site request forgery attacks
-    
-
   })
 }
