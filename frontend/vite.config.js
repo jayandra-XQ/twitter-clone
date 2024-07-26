@@ -7,5 +7,11 @@ export default defineConfig({
   // change the port to 3000 from 5173
   server: {
     port:3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    }
   }
 })
