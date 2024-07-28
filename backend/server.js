@@ -12,18 +12,21 @@ import notificationRoutes from './routes/notification.routes.js';
 import connectMongoDB from './db/connectMongoDB.js';
 
 
-dotenv.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
+dotenv.config();
 
-cloudinary.config
-const app = express();
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+})
+const app = express({limit: "50mb"});
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
-app.use(express.urlencoded({extended: true})); // to parse url encoded
+// app.use(express.json()); // to parse req.body 
+// // limit shouldn't be too high to prevent DOS attacks
+// app.use(express.urlencoded({extended: true})); // to parse  form data(url encoded)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cookieParser());
 
