@@ -2,25 +2,58 @@ import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+import {toast} from 'react-hot-toast';
 
 const CreatePost = () => {
 	const [text, setText] = useState("");
 	const [img, setImg] = useState(null);
 
+	const { data: authUser } = useQuery({ queryKey: ['authUser'] });
+	const queryClient = useQueryClient();
+
+
+
 	const imgRef = useRef(null);
 
-	const isPending = false;
-	const isError = false;
+	const {mutate: createPost, isPending, isError}= useMutation({
+		mutationFn: async ({text, img}) => {
+			const res = await fetch ("/api/posts/create" , {
+				method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text, img }),
+			})
 
-	const data = {
-		profileImg: "/avatars/boy1.png",
-	};
+			const data = await res.json();
+			if (!res.ok) {
+        throw new Error(data.error || "Failed to create post");
+      }
+
+			
+			return data;
+		},
+
+		onSuccess: () => {
+			setText("")
+			setImg(null);
+			// invalidate the query so that it update the UI
+			toast.success("Post created successfully")
+			queryClient.invalidateQueries({queryKey: ['posts']});
+		}
+	})
+
+
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		alert("Post created successfully");
+		createPost({text , img});
 	};
 
+
+	//function to render the image on the client
 	const handleImgChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
@@ -36,7 +69,7 @@ const CreatePost = () => {
 		<div className='flex p-4 items-start gap-4 border-b border-gray-700'>
 			<div className='avatar'>
 				<div className='w-8 rounded-full'>
-					<img src={data.profileImg || "/avatar-placeholder.png"} />
+					<img src={authUser?.profileImg || "/avatar-placeholder.png"} />
 				</div>
 			</div>
 			<form className='flex flex-col gap-2 w-full' onSubmit={handleSubmit}>
@@ -68,8 +101,8 @@ const CreatePost = () => {
 						<BsEmojiSmileFill className='fill-primary w-5 h-5 cursor-pointer' />
 					</div>
 					<input type='file'
-            accept='image/*'
-          hidden ref={imgRef} onChange={handleImgChange} />
+						accept='image/*'
+						hidden ref={imgRef} onChange={handleImgChange} />
 					<button className='btn btn-primary rounded-full btn-sm text-white px-4'>
 						{isPending ? "Posting..." : "Post"}
 					</button>
