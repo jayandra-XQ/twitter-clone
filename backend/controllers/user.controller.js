@@ -83,7 +83,7 @@ export const getSuggestedUsers = async (req, res) => {
       {
         $match: {
           _id: { $ne: userId }
-        }
+        },
       },
       { $sample: { size: 10 } }
     ])
@@ -92,7 +92,10 @@ export const getSuggestedUsers = async (req, res) => {
     const suggestedUsers = filteredUsers.slice(0, 4);
 
     suggestedUsers.forEach((user) => (user.password = null));
+
+    res.status(200).json(suggestedUsers);
   } catch (error) {
+    console.log("Error in getSuggestedUsers: ", error.message);
     res.status(400).json({ message: error.message })
   }
 }
