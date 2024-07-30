@@ -81,7 +81,7 @@ export const commentOnPost = async (req, res) => {
 
     const comment = {user: userId, text}
 
-    post.comments.pust(comment);
+    post.comments.push(comment);
     await post.save();
     res.status(200).json(post);
   } catch (error) {
