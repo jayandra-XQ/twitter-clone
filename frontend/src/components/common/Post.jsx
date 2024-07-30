@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import toast from "react-hot-toast";
 
+import { formatPostDate } from "../../utils/date";
 import LoadingSpinner from "./LoadingSpinner"
 
 const Post = ({ post }) => {
@@ -17,6 +18,15 @@ const Post = ({ post }) => {
 	const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 	const queryClient = useQueryClient();
 
+	const postOwner = post.user;
+	const isLiked = post.likes.includes(authUser._id);
+
+	const isMyPost = authUser._id === post.user._id;
+
+	const formattedDate = formatPostDate(post.createdAt);
+
+
+	// for deleting the post
 	const { mutate: deletePost, isPending: isDeleting } = useMutation({
 		mutationFn: async () => {
 			try {
@@ -43,6 +53,7 @@ const Post = ({ post }) => {
 		},
 	});
 
+	// for liking the post
 	const { mutate: likePost, isPending: isLiking } = useMutation({
 		mutationFn: async () => {
 			try {
@@ -83,14 +94,39 @@ const Post = ({ post }) => {
 		}
 	})
 
-	const postOwner = post.user;
-	const isLiked = post.likes.includes(authUser._id);
+	const { mutate: commentPost, isPending: isCommenting } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch(`/api/posts/comment/${post._id}`, {
+					method: "POST",
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ text: comment }),
+				})
 
-	const isMyPost = authUser._id === post.user._id;
+				const data = await res.json();
+				console.log(data);
+				return data;
+			} catch (error) {
+				console.log(error);
+				throw error;
+			}
+		},
+		onSuccess: () => {
+			toast.success("Comment posted successfully");
+			setComment("");
+			queryClient.invalidateQueries({ querykey: ["posts"] })
+		},
+		onError: () => {
+			toast.error("Failed to comment on post");
+		}
+	})
 
-	const formattedDate = "1h";
 
-	const isCommenting = false;
+
+
+
 
 	const handleDeletePost = () => {
 		deletePost();
@@ -98,6 +134,8 @@ const Post = ({ post }) => {
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if (isCommenting) return;
+		commentPost();
 	};
 
 	const handleLikePost = () => {
